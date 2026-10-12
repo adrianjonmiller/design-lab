@@ -1,0 +1,27 @@
+{
+  "name": "design-lab",
+  "version": "0.1.0",
+  "description": "A safe play area for designing UI inside a real codebase, without touching the app.",
+  "type": "module",
+  "bin": {
+    "design-lab": "bin/design-lab.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "engines": {
+    "node": ">=20.19"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@vitejs/plugin-vue": "^6.0.10",
+    "cac": "^7.1.0",
+    "picocolors": "^1.1.1",
+    "tinyglobby": "^0.2.17",
+    "vite": "^8.3.4",
+    "vue": "^3.5.43",
+    "vue-router": "^4.6.4"
+  }
+}
