@@ -6,6 +6,7 @@
 import 'virtual:design-lab/styles'
 import * as initialManifest from 'virtual:design-lab/manifest'
 import setup from 'virtual:design-lab/setup'
+import wrapper from 'virtual:design-lab/wrapper'
 import config from 'virtual:design-lab/config'
 import { mount } from '../adapters/vue.js'
 import { el, errorBox, stateLabel, propsBlock } from './dom.js'
@@ -50,7 +51,7 @@ async function renderExperiment() {
   const entry = manifest.experiments.find((e) => e.id === target.id)
   if (!entry) throw new Error(`No experiment "${target.id}"`)
   const mod = await entry.load()
-  mounted.push(await mount(root, mod.default, {}, { setup, onError: (err) => reportError(err) }))
+  mounted.push(await mount(root, mod.default, {}, { setup, wrapper, onError: (err) => reportError(err) }))
 }
 
 async function renderComponent() {
@@ -63,7 +64,7 @@ async function renderComponent() {
   const only = params.get('state')
   if (only) {
     if (!states[only]) throw new Error(`"${entry.name}" has no state "${only}"`)
-    mounted.push(await mount(root, mod.default, states[only], { setup, onError: (err) => reportError(err) }))
+    mounted.push(await mount(root, mod.default, states[only], { setup, wrapper, onError: (err) => reportError(err) }))
     return
   }
 
@@ -77,7 +78,7 @@ async function renderComponent() {
     if (params.get('detail')) section.append(propsBlock(state))
     list.append(section)
     try {
-      mounted.push(await mount(mountPoint, mod.default, state, { setup, onError: (err) => reportError(err, stage) }))
+      mounted.push(await mount(mountPoint, mod.default, state, { setup, wrapper, onError: (err) => reportError(err, stage) }))
     } catch (err) {
       reportError(err, stage)
     }

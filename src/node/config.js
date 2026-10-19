@@ -7,6 +7,7 @@ const DEFAULTS = {
   appSrc: 'src',
   globalStyles: [],
   setup: null,
+  wrapper: null,
   viewports: { mobile: 375, tablet: 768, desktop: 1280 },
   vite: {},
 }
@@ -35,6 +36,7 @@ export async function loadLabConfig(projectDir, labDir) {
     appSrcDir: path.resolve(projectDir, config.appSrc),
     globalStyles: [].concat(config.globalStyles ?? []).map((file) => path.resolve(projectDir, file)),
     setup: config.setup ? path.resolve(labDir, config.setup) : null,
+    wrapper: config.wrapper ? path.resolve(labDir, config.wrapper) : null,
   }
 }
 

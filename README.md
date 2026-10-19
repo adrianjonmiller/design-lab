@@ -61,6 +61,7 @@ export default {
   appSrc: 'src',                          // exposed to lab files as `@app/...` (and `@/...`)
   globalStyles: ['src/assets/main.css'],  // loaded into every preview; detected from your entry file
   setup: './setup.js',                    // optional: (app) => app.use(createPinia())
+  wrapper: './Wrapper.vue',               // optional: wraps every preview in its <slot />
   viewports: { mobile: 375, tablet: 768, desktop: 1280 },
   vite: {},                               // extra Vite config merged into the lab server
 }

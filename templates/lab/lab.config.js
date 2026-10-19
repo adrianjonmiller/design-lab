@@ -13,6 +13,12 @@ export default {
   //   export default (app) => app.use(createPinia())
   // setup: './setup.js',
 
+  // Optional: a component in .design-lab that wraps every preview in its default slot,
+  // for app-level providers the app puts around its root (tooltips, toasts, theme, ...).
+  //   <!-- .design-lab/Wrapper.vue -->
+  //   <template><TooltipProvider><slot /></TooltipProvider></template>
+  // wrapper: './Wrapper.vue',
+
   // Widths offered by the viewport switcher.
   viewports: { mobile: 375, tablet: 768, desktop: 1280 },
 

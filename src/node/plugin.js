@@ -6,8 +6,9 @@ import { toPosix } from './paths.js'
 const MANIFEST = 'virtual:design-lab/manifest'
 const CONFIG = 'virtual:design-lab/config'
 const SETUP = 'virtual:design-lab/setup'
+const WRAPPER = 'virtual:design-lab/wrapper'
 const STYLES = 'virtual:design-lab/styles'
-const VIRTUAL = new Set([MANIFEST, CONFIG, SETUP, STYLES])
+const VIRTUAL = new Set([MANIFEST, CONFIG, SETUP, WRAPPER, STYLES])
 
 // Files and folders starting with `_` are private helpers and are never listed.
 const PRIVATE = ['**/_*', '**/_*/**']
@@ -37,6 +38,9 @@ export function labPlugin(lab) {
       }
       if (name === SETUP) {
         return lab.setup ? `export { default } from ${JSON.stringify(toPosix(lab.setup))}` : 'export default null'
+      }
+      if (name === WRAPPER) {
+        return lab.wrapper ? `export { default } from ${JSON.stringify(toPosix(lab.wrapper))}` : 'export default null'
       }
       if (name === STYLES) {
         return lab.globalStyles.map((file) => `import ${JSON.stringify(toPosix(file))}`).join('\n')
