@@ -2,7 +2,7 @@ import path from 'node:path'
 import { existsSync, watch } from 'node:fs'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
-import { createServer, mergeConfig } from 'vite'
+import { createServer, mergeConfig, searchForWorkspaceRoot } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import pc from 'picocolors'
 import { LAB_DIRNAME, clientRoot, packageRoot, toPosix } from './paths.js'
@@ -72,7 +72,9 @@ async function createViteConfig(lab, options) {
       port: Number(options.port) || 5199,
       host: options.host,
       open: options.open ? '/' : false,
-      fs: { allow: [projectDir, packageRoot, ...nodeModulesDirs()] },
+      // The workspace root, not just the project: in a monorepo the app's styles and components
+      // reach into sibling packages (fonts, shared components), as Vite's own default allows.
+      fs: { allow: [searchForWorkspaceRoot(projectDir), packageRoot, ...nodeModulesDirs()] },
       watch: { ignored: ['**/.design-lab/.cache/**'] },
     },
     optimizeDeps: {
