@@ -15,6 +15,10 @@
     "node": ">=20.19"
   },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianjonmiller/design-lab.git"
+  },
   "dependencies": {
     "@vitejs/plugin-vue": "^6.0.10",
     "cac": "^7.1.0",
