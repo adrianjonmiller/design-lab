@@ -54,7 +54,7 @@ async function createViteConfig(lab, options) {
     appType: 'spa',
     plugins: [
       vue({ compiler: tryRequire(projectRequire, 'vue/compiler-sfc') }),
-      ...(await detectProjectPlugins(projectRequire, projectDir, labDir)),
+      ...(await detectProjectPlugins(projectRequire, projectDir, labDir, lab.globalStyles)),
       labPlugin(lab),
     ],
     resolve: {
@@ -89,12 +89,12 @@ async function createViteConfig(lab, options) {
  * Plugins the parent app almost certainly relies on for styling, which live in its
  * vite.config (that we deliberately do not load). Anything else goes in lab.config.js `vite`.
  */
-async function detectProjectPlugins(projectRequire, projectDir, labDir) {
+async function detectProjectPlugins(projectRequire, projectDir, labDir, globalStyles) {
   const plugins = []
   const tailwind = tryResolve(projectRequire, '@tailwindcss/vite')
   if (tailwind) {
     const mod = await import(pathToFileURL(tailwind).href)
-    plugins.push(tailwindLabSource(labDir))
+    plugins.push(tailwindLabSource(labDir, globalStyles))
     // Tailwind scans for class names from Vite's root, which for us is design-lab's own client.
     plugins.push(...[].concat(mod.default()).map((p) => withRoot(p, projectDir)))
   }
@@ -104,14 +104,20 @@ async function detectProjectPlugins(projectRequire, projectDir, labDir) {
 /**
  * Tailwind skips gitignored paths, and teams often gitignore .design-lab. An explicit `@source`
  * is always scanned, so add one to the app's Tailwind entry CSS (in memory only).
+ *
+ * The entry is every global stylesheet the lab loads as well as any file importing tailwindcss
+ * directly: when the app imports its Tailwind entry from another package (a monorepo's shared
+ * tokens), Tailwind inlines that import itself and Vite never transforms the inner file.
  */
-function tailwindLabSource(labDir) {
+function tailwindLabSource(labDir, globalStyles = []) {
+  const roots = new Set(globalStyles.map(toPosix))
   return {
     name: 'design-lab:tailwind-source',
     enforce: 'pre',
     transform(code, id) {
-      const file = id.split('?')[0]
-      if (!file.endsWith('.css') || !/@import\s+['"]tailwindcss/.test(code)) return
+      const file = toPosix(id.split('?')[0])
+      if (!file.endsWith('.css')) return
+      if (!roots.has(file) && !/@import\s+['"]tailwindcss/.test(code)) return
       const rel = toPosix(path.relative(path.dirname(file), labDir))
       return { code: `${code}\n@source ${JSON.stringify(rel)};\n`, map: null }
     },
