@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { existsSync, readFileSync } from 'node:fs'
+import { existsSync, readFileSync, realpathSync } from 'node:fs'
 import { loadConfigFromFile } from 'vite'
 import { CONFIG_FILENAME } from './paths.js'
 
@@ -17,8 +17,10 @@ export async function loadLabConfig(projectDir, labDir) {
   let user = {}
   if (existsSync(configPath)) {
     // Vite's loader bundles the file, so it works whether or not the project is "type": "module".
+    // A config that exports a function receives this env, so it can build paths from the project
+    // rather than from its own location (which is elsewhere when .design-lab is a symlink).
     const loaded = await loadConfigFromFile(
-      { command: 'serve', mode: 'development' },
+      { command: 'serve', mode: 'development', projectDir, labDir },
       configPath,
       labDir,
       'silent',
@@ -32,6 +34,8 @@ export async function loadLabConfig(projectDir, labDir) {
     configPath,
     projectDir,
     labDir,
+    // Where the lab's files really are: differs from labDir when .design-lab is a symlink.
+    labRealDir: realpathSync(labDir),
     projectName: readProjectName(projectDir),
     appSrcDir: path.resolve(projectDir, config.appSrc),
     globalStyles: [].concat(config.globalStyles ?? []).map((file) => path.resolve(projectDir, file)),

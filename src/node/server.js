@@ -1,5 +1,5 @@
 import path from 'node:path'
-import { existsSync, watch } from 'node:fs'
+import { existsSync, realpathSync, watch } from 'node:fs'
 import { createRequire } from 'node:module'
 import { pathToFileURL } from 'node:url'
 import { createServer, mergeConfig, searchForWorkspaceRoot } from 'vite'
@@ -17,7 +17,7 @@ export async function startLab(projectDir, options = {}) {
   console.log(`  ${pc.dim('➜  Lab files:')} ${pc.cyan(path.relative(process.cwd(), labDir) || labDir)}\n`)
 
   let restarting = null
-  watch(labDir, (_event, file) => {
+  watch(realpathSync(labDir), (_event, file) => {
     if (file !== 'lab.config.js' || restarting) return
     restarting = (async () => {
       console.log(pc.dim('lab.config.js changed, restarting…'))
@@ -39,7 +39,7 @@ async function boot(projectDir, labDir, options) {
 }
 
 async function createViteConfig(lab, options) {
-  const { projectDir, labDir, appSrcDir } = lab
+  const { projectDir, labDir, labRealDir, appSrcDir } = lab
   const projectRequire = createRequire(path.join(projectDir, 'package.json'))
   const projectVue = resolvePackageDir(projectRequire, 'vue')
   const publicDir = path.join(projectDir, 'public')
@@ -53,8 +53,9 @@ async function createViteConfig(lab, options) {
     clearScreen: false,
     appType: 'spa',
     plugins: [
+      ...(labRealDir !== labDir ? [linkedLab(labDir, labRealDir)] : []),
       vue({ compiler: tryRequire(projectRequire, 'vue/compiler-sfc') }),
-      ...(await detectProjectPlugins(projectRequire, projectDir, labDir, lab.globalStyles)),
+      ...(await detectProjectPlugins(projectRequire, projectDir, lab)),
       labPlugin(lab),
     ],
     resolve: {
@@ -74,8 +75,8 @@ async function createViteConfig(lab, options) {
       open: options.open ? '/' : false,
       // The workspace root, not just the project: in a monorepo the app's styles and components
       // reach into sibling packages (fonts, shared components), as Vite's own default allows.
-      fs: { allow: [searchForWorkspaceRoot(projectDir), packageRoot, ...nodeModulesDirs()] },
-      watch: { ignored: ['**/.design-lab/.cache/**'] },
+      fs: { allow: [searchForWorkspaceRoot(projectDir), labRealDir, packageRoot, ...nodeModulesDirs()] },
+      watch: { ignored: ['**/.design-lab/.cache/**', toPosix(path.join(labRealDir, '.cache')) + '/**'] },
     },
     optimizeDeps: {
       entries: [path.join(clientRoot, 'index.html'), path.join(clientRoot, 'frame.html')],
@@ -89,12 +90,12 @@ async function createViteConfig(lab, options) {
  * Plugins the parent app almost certainly relies on for styling, which live in its
  * vite.config (that we deliberately do not load). Anything else goes in lab.config.js `vite`.
  */
-async function detectProjectPlugins(projectRequire, projectDir, labDir, globalStyles) {
+async function detectProjectPlugins(projectRequire, projectDir, lab) {
   const plugins = []
   const tailwind = tryResolve(projectRequire, '@tailwindcss/vite')
   if (tailwind) {
     const mod = await import(pathToFileURL(tailwind).href)
-    plugins.push(tailwindLabSource(labDir, globalStyles))
+    plugins.push(tailwindLabSource(lab.labRealDir, lab.globalStyles, lab.labRealDir !== lab.labDir))
     // Tailwind scans for class names from Vite's root, which for us is design-lab's own client.
     plugins.push(...[].concat(mod.default()).map((p) => withRoot(p, projectDir)))
   }
@@ -109,7 +110,7 @@ async function detectProjectPlugins(projectRequire, projectDir, labDir, globalSt
  * directly: when the app imports its Tailwind entry from another package (a monorepo's shared
  * tokens), Tailwind inlines that import itself and Vite never transforms the inner file.
  */
-function tailwindLabSource(labDir, globalStyles = []) {
+function tailwindLabSource(labRealDir, globalStyles = [], linked = false) {
   const roots = new Set(globalStyles.map(toPosix))
   return {
     name: 'design-lab:tailwind-source',
@@ -118,8 +119,32 @@ function tailwindLabSource(labDir, globalStyles = []) {
       const file = toPosix(id.split('?')[0])
       if (!file.endsWith('.css')) return
       if (!roots.has(file) && !/@import\s+['"]tailwindcss/.test(code)) return
-      const rel = toPosix(path.relative(path.dirname(file), labDir))
-      return { code: `${code}\n@source ${JSON.stringify(rel)};\n`, map: null }
+      // A linked lab's files are elsewhere on disk: name them absolutely, since a path relative to
+      // the stylesheet depends on whether Tailwind starts from its link or its real location.
+      const source = linked ? toPosix(labRealDir) : toPosix(path.relative(path.dirname(file), labRealDir))
+      return { code: `${code}\n@source ${JSON.stringify(source)};\n`, map: null }
+    },
+  }
+}
+
+/**
+ * A lab linked in from elsewhere (`.design-lab` is a symlink to its own checkout). Vite resolves
+ * files to their real location, where neither the app's relative paths nor the project's
+ * node_modules are reachable, and every tool that resolves from a file's id (Vue's type imports,
+ * Tailwind's CSS @imports) inherits that. Give lab files their link path as their id instead, so
+ * they sit inside the project for everyone. Files outside the lab keep their real paths, which
+ * pnpm's layout needs.
+ */
+function linkedLab(labDir, labRealDir) {
+  const realPrefix = toPosix(labRealDir) + '/'
+  const linkPrefix = toPosix(labDir) + '/'
+  return {
+    name: 'design-lab:linked-lab',
+    enforce: 'pre',
+    async resolveId(source, importer, options) {
+      const resolved = await this.resolve(source, importer, { ...options, skipSelf: true })
+      if (!resolved || !toPosix(resolved.id).startsWith(realPrefix)) return resolved
+      return { ...resolved, id: linkPrefix + toPosix(resolved.id).slice(realPrefix.length) }
     },
   }
 }

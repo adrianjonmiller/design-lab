@@ -49,9 +49,9 @@ export function labPlugin(lab) {
 
     configureServer(_server) {
       server = _server
-      server.watcher.add(labDir)
+      server.watcher.add([labDir, lab.labRealDir])
       const onAddOrRemove = (file) => {
-        if (!isLabEntry(labDir, file)) return
+        if (!isLabEntry(labDir, file) && !isLabEntry(lab.labRealDir, file)) return
         const mod = server.moduleGraph.getModuleById('\0' + MANIFEST)
         if (mod) server.reloadModule(mod)
       }

@@ -79,6 +79,22 @@ Tailwind v3 reads its `content` globs from `tailwind.config.js`, so classes used
 
 Anything else your components need (other aliases, plugins like auto-imports) goes in the `vite` field.
 
+The config can also be a function. It receives `projectDir` and `labDir`, so paths can come from the project rather than from the config file's own location:
+
+```js
+import path from 'node:path'
+
+export default ({ projectDir }) => ({
+  vite: { resolve: { alias: { '@ui': path.resolve(projectDir, '../../packages/ui/src') } } },
+})
+```
+
+## A lab in its own repository
+
+`.design-lab` can be a symlink to a checkout somewhere else, so a team can keep its lab in a separate repository without the app's repository tracking it. Lab files then resolve as if they sat inside the project: relative paths into the app, bare imports from the project's `node_modules`, Vue's type imports and Tailwind's CSS `@import`s all work as they would in place. Gitignore `.design-lab` without a trailing slash; `.design-lab/` matches a folder but not a symlink.
+
+A lab linked in from elsewhere should not compute paths from `import.meta.url` in `lab.config.js`, because that is the checkout's real location. Use the function form above.
+
 ## CLI
 
 ```
