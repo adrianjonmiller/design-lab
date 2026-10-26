@@ -1,6 +1,6 @@
 {
   "name": "design-lab",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A safe play area for designing UI inside a real codebase, without touching the app.",
   "type": "module",
   "bin": {
@@ -12,7 +12,7 @@
     "templates"
   ],
   "engines": {
-    "node": ">=20.19"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "license": "MIT",
   "repository": {

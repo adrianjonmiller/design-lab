@@ -1,0 +1,14 @@
+{
+  "name": "standalone-lab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "design-lab": "design-lab"
+  },
+  "devDependencies": {
+    "design-lab": "file:../..",
+    "vue": "^3.5.43",
+    "tailwindcss": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.3"
+  }
+}

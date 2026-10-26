@@ -1,4 +1,4 @@
-// Preview runtime. Runs inside an iframe so the parent app's global CSS and the lab shell never collide.
+// Preview runtime. Runs inside an iframe so the app's global CSS and the lab shell never collide.
 //   ?component=<id>                 every state, stacked and labelled
 //   ?component=<id>&detail=1        same, plus each state's props
 //   ?component=<id>&state=<name>    one state, bare
@@ -9,7 +9,7 @@ import setup from 'virtual:design-lab/setup'
 import wrapper from 'virtual:design-lab/wrapper'
 import config from 'virtual:design-lab/config'
 import { mount } from '../adapters/vue.js'
-import { el, errorBox, stateLabel, propsBlock } from './dom.js'
+import { el, errorBox, stateLabel, stateDetails } from './dom.js'
 
 const params = new URLSearchParams(location.search)
 const target = params.get('experiment')
@@ -57,7 +57,7 @@ async function renderExperiment() {
 async function renderComponent() {
   const entry = manifest.components.find((c) => c.id === target.id)
   if (!entry) throw new Error(`No component "${target.id}"`)
-  const [mod, statesMod] = await Promise.all([entry.load(), entry.states?.()])
+  const [mod, statesMod] = await Promise.all([entry.load(), entry.loadStates?.()])
   const def = statesMod?.default ?? {}
   const states = def.states && Object.keys(def.states).length ? def.states : { Default: {} }
 
@@ -74,8 +74,8 @@ async function renderComponent() {
     const stage = el('div', { style: `padding:16px;border-radius:8px;${state.background ? `background:${state.background};` : ''}` })
     const mountPoint = el('div')
     stage.append(mountPoint)
-    const section = el('section', {}, [stateLabel(name, standaloneUrl(entry.id, name)), stage])
-    if (params.get('detail')) section.append(propsBlock(state))
+    const section = el('section', {}, [stateLabel(name, stateUrl(entry.id, name)), stage])
+    if (params.get('detail')) section.append(stateDetails(state))
     list.append(section)
     try {
       mounted.push(await mount(mountPoint, mod.default, state, { setup, wrapper, onError: (err) => reportError(err, stage) }))
@@ -85,7 +85,7 @@ async function renderComponent() {
   }
 }
 
-function standaloneUrl(id, state) {
+function stateUrl(id, state) {
   return `/frame.html?component=${encodeURIComponent(id)}&state=${encodeURIComponent(state)}`
 }
 
@@ -98,7 +98,8 @@ window.addEventListener('error', (e) => reportError(e.error ?? e.message))
 window.addEventListener('unhandledrejection', (e) => reportError(e.reason))
 
 if (import.meta.hot) {
-  // A lab file was added, removed, or a .lab.js changed: re-render with the new manifest.
+  // A component, experiment or states file was added or removed, or a states file changed:
+  // re-render with the new manifest.
   import.meta.hot.accept('virtual:design-lab/manifest', (next) => {
     if (!next) return
     manifest = next
@@ -108,8 +109,8 @@ if (import.meta.hot) {
   // Compile errors in this frame's own files (Vite shows its overlay here; the shell gets a red dot).
   import.meta.hot.on('vite:error', ({ err }) => {
     const entry = (target.kind === 'experiment' ? manifest.experiments : manifest.components).find((e) => e.id === target.id)
-    const files = [entry?.file, entry?.statesFile].filter(Boolean).map((f) => `/${config.labDir}/${f}`)
-    if (!files.some((f) => err?.id?.endsWith(f))) return
+    const files = [entry?.file, entry?.statesFile].filter(Boolean).flatMap((f) => config.labDirs.map((dir) => `${dir}/${f}`))
+    if (!files.includes(err?.id?.split('?')[0])) return
     hadError = true
     post('error', { message: err.message })
   })

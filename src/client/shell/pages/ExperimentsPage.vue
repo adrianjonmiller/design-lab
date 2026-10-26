@@ -1,5 +1,5 @@
 <script setup>
-import { lab, config, errorFor, frameUrl } from '../store.js'
+import { catalog, config, errorFor, frameUrl } from '../store.js'
 import PreviewFrame from '../components/PreviewFrame.vue'
 import EmptyState from '../components/EmptyState.vue'
 </script>
@@ -9,20 +9,20 @@ import EmptyState from '../components/EmptyState.vue'
     <header class="page-head">
       <div>
         <h1>Experiments</h1>
-        <p class="muted">Full-page mockups from <code>{{ config.labDir }}/experiments</code>.</p>
+        <p class="muted">Full-page mockups from <code>{{ config.labDirName }}/experiments</code>.</p>
       </div>
     </header>
 
-    <EmptyState v-if="!lab.experiments.length" title="No experiments yet">
+    <EmptyState v-if="!catalog.experiments.length" title="No experiments yet">
       <p>
-        Add <code>{{ config.labDir }}/experiments/Checkout.vue</code>, or a folder with an
+        Add <code>{{ config.labDirName }}/experiments/Checkout.vue</code>, or a folder with an
         <code>index.vue</code> for bigger pages. Everything else in that folder is yours to organise.
       </p>
     </EmptyState>
 
     <div v-else class="thumb-grid">
       <RouterLink
-        v-for="x in lab.experiments"
+        v-for="x in catalog.experiments"
         :key="x.id"
         :to="`/experiments/${x.id}`"
         class="card thumb"

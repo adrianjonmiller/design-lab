@@ -1,5 +1,5 @@
 <script setup>
-import { lab, config, errorFor, frameUrl } from '../store.js'
+import { catalog, config, errorFor, frameUrl } from '../store.js'
 import PreviewFrame from '../components/PreviewFrame.vue'
 import EmptyState from '../components/EmptyState.vue'
 </script>
@@ -9,14 +9,14 @@ import EmptyState from '../components/EmptyState.vue'
     <header class="page-head">
       <div>
         <h1>Components</h1>
-        <p class="muted">Every component in <code>{{ config.labDir }}/components</code>, in every state.</p>
+        <p class="muted">Every component in <code>{{ config.labDirName }}/components</code>, in every state.</p>
       </div>
     </header>
 
-    <EmptyState v-if="!lab.components.length" title="No components yet">
-      <p>Add a <code>.vue</code> file to <code>{{ config.labDir }}/components/</code> and it shows up here.</p>
+    <EmptyState v-if="!catalog.components.length" title="No components yet">
+      <p>Add a <code>.vue</code> file to <code>{{ config.labDirName }}/components/</code> and it shows up here.</p>
       <p>Declare its states in a <code>.lab.js</code> file next to it:</p>
-      <pre><code>// {{ config.labDir }}/components/Button.lab.js
+      <pre><code>// {{ config.labDirName }}/components/Button.lab.js
 export default {
   states: {
     Primary:  { props: { variant: 'primary' }, slots: { default: 'Save' } },
@@ -27,7 +27,7 @@ export default {
 
     <div v-else class="card-grid">
       <article
-        v-for="c in lab.components"
+        v-for="c in catalog.components"
         :key="c.id"
         class="card"
         :class="{ 'has-error': errorFor('component', c.id) }"

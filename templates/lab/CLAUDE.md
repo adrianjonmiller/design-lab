@@ -4,14 +4,19 @@ This folder is a design play area. It is served by `npx design-lab`, which hot-r
 
 ## Ground rules
 - **Only create or edit files inside this folder.** Never change anything outside `.design-lab/`: not the app's source, `package.json`, configs or lockfiles.
-- **Never install dependencies.** Use what the parent app already has.
+- **Never install dependencies.** Use what the app already has.
 - **Import from the app, don't copy it.** `@app/...` points at the app's source (for example `import Button from '@app/components/Button.vue'`). Reuse the app's components, composables, tokens and styles wherever they fit.
 - The app's global styles (see `globalStyles` in `lab.config.js`) are already loaded in every preview, so its utility classes and CSS variables just work.
+
+## Imports
+- `@app/...` and `@/...` are the app's source. The app's other aliases (from its `vite.config` or `tsconfig.json`) work too.
+- Every entry in `projects` in `lab.config.js` is another codebase, imported as `@<name>/...` (for example `@ui/components/Card.vue`). Its components keep resolving their own aliases, so import them as they are.
+- `@lab/...` is this folder, for imports that would otherwise need long `../../` chains. `aliases` in `lab.config.js` adds lab-only shortcuts.
 
 ## Components: `components/`
 A component is any `.vue` file under `components/`. Subfolders become groups (`components/forms/TextField.vue`).
 
-Declare its states in a `.lab.js` file with the same name next to it:
+Declare its states in a states file: a `.lab.js` (or `.lab.ts`) file with the same name next to it:
 
 ```js
 // components/PricingCard.lab.js
@@ -29,7 +34,7 @@ export default {
 }
 ```
 
-Cover the states that matter to a designer: default, each variant, disabled, loading, empty, error, and long or awkward content. Without a `.lab.js` file the component renders once with no props.
+Cover the states that matter to a designer: default, each variant, disabled, loading, empty, error, and long or awkward content. Without a states file the component renders once with no props.
 
 ## Experiments: `experiments/`
 Full-page mockups. Use `experiments/Name.vue`, or `experiments/Name/index.vue` when a page needs its own parts (`experiments/Name/Sidebar.vue`, `experiments/Name/data.js`). Only `index.vue` is listed as the page.

@@ -1,11 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
-import { lab, config, errorFor } from '../store.js'
+import { catalog, config, errorFor } from '../store.js'
 
 const query = ref('')
 const match = (item) => item.id.toLowerCase().includes(query.value.trim().toLowerCase())
-const components = computed(() => lab.components.filter(match))
-const experiments = computed(() => lab.experiments.filter(match))
+const components = computed(() => catalog.components.filter(match))
+const experiments = computed(() => catalog.experiments.filter(match))
 </script>
 
 <template>
@@ -16,7 +16,7 @@ const experiments = computed(() => lab.experiments.filter(match))
       </span>
       <div>
         <div class="brand-name">design-lab</div>
-        <div class="brand-project">{{ config.projectName }}</div>
+        <div class="brand-home">{{ config.homeName }}</div>
       </div>
     </header>
 
@@ -24,7 +24,7 @@ const experiments = computed(() => lab.experiments.filter(match))
 
     <nav class="nav">
       <RouterLink to="/components" class="nav-heading">
-        Components <span class="count">{{ lab.components.length }}</span>
+        Components <span class="count">{{ catalog.components.length }}</span>
       </RouterLink>
       <RouterLink
         v-for="c in components"
@@ -38,7 +38,7 @@ const experiments = computed(() => lab.experiments.filter(match))
       <p v-if="!components.length" class="nav-empty">{{ query ? 'No matches' : 'None yet' }}</p>
 
       <RouterLink to="/experiments" class="nav-heading">
-        Experiments <span class="count">{{ lab.experiments.length }}</span>
+        Experiments <span class="count">{{ catalog.experiments.length }}</span>
       </RouterLink>
       <RouterLink
         v-for="x in experiments"
@@ -52,6 +52,6 @@ const experiments = computed(() => lab.experiments.filter(match))
       <p v-if="!experiments.length" class="nav-empty">{{ query ? 'No matches' : 'None yet' }}</p>
     </nav>
 
-    <footer class="sidebar-foot">Files live in <code>{{ config.labDir }}/</code></footer>
+    <footer class="sidebar-foot">Files live in <code>{{ config.labDirName }}/</code></footer>
   </aside>
 </template>

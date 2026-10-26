@@ -12,7 +12,9 @@ const VIRTUAL = new Set([MANIFEST, CONFIG, SETUP, WRAPPER, STYLES])
 
 // Files and folders starting with `_` are private helpers and are never listed.
 const PRIVATE = ['**/_*', '**/_*/**']
+// A component's states file sits next to it: Button.vue + Button.lab.js.
 const STATE_EXTS = ['.lab.js', '.lab.ts', '.lab.mjs']
+const LAB_ENTRY = new RegExp(`(\\.vue|${STATE_EXTS.map((ext) => ext.replaceAll('.', '\\.')).join('|')})$`)
 
 export function labPlugin(lab) {
   const { labDir } = lab
@@ -31,9 +33,12 @@ export function labPlugin(lab) {
       if (name === MANIFEST) return generateManifest(labDir)
       if (name === CONFIG) {
         return `export default ${JSON.stringify({
-          projectName: lab.projectName,
+          homeName: lab.homeName,
           viewports: lab.viewports,
-          labDir: path.basename(labDir),
+          // For display: `.design-lab`, or a standalone lab's folder name.
+          labDirName: path.basename(labDir),
+          // The lab's link and real folders, so a compile error's file can be matched exactly.
+          labDirs: [...new Set([labDir, lab.labRealDir].map(toPosix))],
         })}`
       }
       if (name === SETUP) {
@@ -63,7 +68,7 @@ export function labPlugin(lab) {
 
 function isLabEntry(labDir, file) {
   const rel = toPosix(path.relative(labDir, file))
-  return (rel.startsWith('components/') || rel.startsWith('experiments/')) && /\.(vue|lab\.[mc]?[jt]s)$/.test(rel)
+  return (rel.startsWith('components/') || rel.startsWith('experiments/')) && LAB_ENTRY.test(rel)
 }
 
 async function generateManifest(labDir) {
@@ -83,7 +88,7 @@ async function generateManifest(labDir) {
       file,
       statesFile: statesFile ?? null,
       load: `() => import(${JSON.stringify('@lab/' + file)})`,
-      states: statesFile ? `() => import(${JSON.stringify('@lab/' + statesFile)})` : 'null',
+      loadStates: statesFile ? `() => import(${JSON.stringify('@lab/' + statesFile)})` : 'null',
     }
   })
 
@@ -106,7 +111,7 @@ async function generateManifest(labDir) {
 /** JSON for data fields, raw code for the lazy import functions. */
 function serializeEntry(entry) {
   const fields = Object.entries(entry).map(([key, value]) =>
-    key === 'load' || key === 'states' ? `${key}: ${value}` : `${key}: ${JSON.stringify(value)}`,
+    key === 'load' || key === 'loadStates' ? `${key}: ${value}` : `${key}: ${JSON.stringify(value)}`,
   )
   return `\n  { ${fields.join(', ')} }`
 }

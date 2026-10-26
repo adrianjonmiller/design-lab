@@ -1,4 +1,4 @@
-// Frame chrome uses inline styles only, so the parent app's global CSS can't restyle it.
+// Frame chrome uses inline styles only, so the app's global CSS can't restyle it.
 const MONO = 'ui-monospace,SFMono-Regular,Menlo,monospace'
 const SANS = 'system-ui,-apple-system,Segoe UI,sans-serif'
 
@@ -21,7 +21,8 @@ export function stateLabel(name, href) {
   }, [name, link])
 }
 
-export function propsBlock(state) {
+/** A state's props and slots, as shown on a component's own page. */
+export function stateDetails(state) {
   const data = {}
   if (state.props && Object.keys(state.props).length) data.props = state.props
   if (state.slots && Object.keys(state.slots).length) data.slots = describeSlots(state.slots)

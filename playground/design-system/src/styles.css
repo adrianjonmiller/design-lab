@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+@theme {
+  --color-ui-accent: #7c3aed;
+}

@@ -19,7 +19,7 @@ export async function mount(el, Component, state = {}, { setup, wrapper, onError
     render: () => (wrapper ? h(wrapper, null, { default: preview }) : preview()),
   })
   app.config.errorHandler = (err) => onError?.(err)
-  app.config.warnHandler = () => {}
+  // Warnings (a missing required prop, an unknown component) keep Vue's default: the frame's console.
   if (setup) await setup(app)
   app.mount(el)
   return { unmount: () => app.unmount() }
